@@ -4,7 +4,9 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+
+// Use the PORT from environment variables (Render will set it)
+const PORT = process.env.PORT || 3000;  // Default to 3000 if PORT is not set
 
 // Create directories if they don't exist
 if (!fs.existsSync(path.join(__dirname, 'captured_images'))) {
@@ -52,7 +54,7 @@ app.post('/upload', (req, res) => {
     });
 });
 
-// Start the server
-app.listen(PORT, () => {
+// Start the server and listen on the correct network interface
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

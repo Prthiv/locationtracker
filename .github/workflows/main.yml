@@ -1,0 +1,32 @@
+name: Discord Bot CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Triggers when pushing to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js (you can change the version to match your bot's requirement)
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'  # Change to your preferred Node.js version
+
+      # Step 3: Install dependencies using npm
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run your bot using the securely stored bot token
+      - name: Run Discord bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}  # Securely reference the bot token stored in GitHub Secrets
+        run: |
+          node your-bot-file.js  # Replace with the actual file name of your bot (e.g., index.js, bot.js)

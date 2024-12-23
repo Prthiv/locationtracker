@@ -2,11 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');  // Updated import
 const { token, channelID } = require('./config.json');  // Import token and channel ID
 
 const app = express();
-const discordClient = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const discordClient = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });  // Updated
 
 // Server Port
 const PORT = process.env.PORT || 3000;

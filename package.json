@@ -2,7 +2,8 @@
   "dependencies": {
     "body-parser": "^1.20.3",
     "express": "^4.21.1",
-    "discord.js": "^14.0.0"
+    "discord.js": "^14.0.0",
+    "dotenv": "^16.0.0"  // Added dotenv dependency here
   },
   "name": "jarvis",
   "version": "1.0.0",

@@ -76,6 +76,21 @@ app.post('/upload', (req, res) => {
     });
 });
 
+// Route to handle commands sent from the client
+app.post('/send-command', (req, res) => {
+    const { command } = req.body;
+    if (command) {
+        discordClient.channels.fetch(channelID)
+            .then(channel => {
+                channel.send(`Command received: ${command}`);
+            })
+            .catch(console.error);
+        res.status(200).json({ message: 'Command sent to Discord bot.' });
+    } else {
+        res.status(400).json({ message: 'No command provided.' });
+    }
+});
+
 // Start the server and listen on the correct network interface
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);

